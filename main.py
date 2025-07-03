@@ -19,6 +19,14 @@ FILTER_3_TARGET1 = "5 stars"
 FILTER_3_TARGET2 = "4 stars"
 # ---------------------------------------------------------------------------
 
+def safe_text(drv, txt):
+    try:
+        return drv.find_element(By.CLASS_NAME, txt).text.strip()
+    except Exception:
+        return "n/a"
+
+# ---------------------------------------------------------------------------
+
 def readFileAndCheckValidity(dataInput):
     # Print the file
     print(dataInput)
@@ -147,6 +155,33 @@ def fltr(drv, options, target, otherOptions="empty", waitTime=30):
     
 # ---------------------------------------------------------------------------
 
+def extractHotels(results, dataResults):
+    index = 1
+     # Loop through the results (just the first 3)
+    for result in results:
+        if index > 3:
+            break;
+        name = safe_text(result, "uitk-heading")
+        if name == "n/a" or name == "No exact matches":
+            print("no hotel name, continue")
+            continue
+        rating = safe_text(result, "uitk-rating")
+        total = safe_text(result, "uitk-type-end")
+        dataResults.append(
+            {
+                "name": name,
+                "rating": rating,
+                "total": total.removesuffix(" total"),
+            }
+        )
+        index+=1
+        print(f"name: {name}")
+        print(f"rating: {rating}")
+        print(f"total: {total}")
+    print(dataResults)
+
+# ---------------------------------------------------------------------------
+
 def main():
     dataInput = []
     # Open the input file
@@ -172,6 +207,16 @@ def main():
         fltr(driver,FILTER_2_OPTIONS,FILTER_2_TARGET)
         fltr(driver,FILTER_3_OPTIONS,FILTER_3_TARGET1)
         fltr(driver,FILTER_3_OPTIONS,FILTER_3_TARGET2)
+        # Wait for the results and then store it
+        res = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div[data-stid='property-listing-results']")))
+        results = res.find_elements(By.CSS_SELECTOR, "div.uitk-card")
+        dataResults = []
+        extractHotels(results, dataResults)
+        # Dump dataResults to a file
+        with open("output", "w", encoding="utf-8") as f:
+            json.dump(dataResults, f, ensure_ascii=False, indent=2)
+        print("Saved to output.json")
+        #input("Press Enter to close the browser…")
     finally:
         driver.quit()
         
