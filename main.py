@@ -9,6 +9,14 @@ from selenium.webdriver.common.keys import Keys
 # ---------------------------------------------------------------------------
 WEBSITE_URL = "https://www.expedia.ca/"
 TAB_NAME  = "Stays"
+FILTER_1_OPTIONS = "stay_options_group"
+FILTER_1_ALTERNATIVE_OPTIONS = "lodging"
+FILTER_1_TARGET = "hotel"
+FILTER_2_OPTIONS = "mealPlan"
+FILTER_2_TARGET = "Breakfast included"
+FILTER_3_OPTIONS = "star"
+FILTER_3_TARGET1 = "5 stars"
+FILTER_3_TARGET2 = "4 stars"
 # ---------------------------------------------------------------------------
 
 def readFileAndCheckValidity(dataInput):
@@ -112,6 +120,33 @@ def insertDates(drv, data):
     
 # ---------------------------------------------------------------------------
 
+def fltr(drv, options, target, otherOptions="empty", waitTime=30):
+    try:
+        wait = WebDriverWait(drv, waitTime)
+        # Wait for the stay_options_group (or lodging in case no stay_options_group), then loop through and look for the appropriate box button 
+        boxes = []
+        try:
+            boxes = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, f"input[name='{options}']")))
+        except:
+            print(f"could not find {options}")
+            if(otherOptions != "empty"):
+                boxes = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, f"input[name='{otherOptions}']")))
+        for box in boxes:
+            label = box.get_attribute("aria-label") or ""
+            if label.lower().startswith(target.lower()):
+                # Make sure it is not already checked
+                if not box.is_selected():
+                    # Click it and quit the loop
+                    box.click() 
+                    print(f"Selected: {target}")
+                    break
+        else:
+            print(f"No box with label {target} found")
+    except:
+        print(f"error while looking for {target} in {options}")
+    
+# ---------------------------------------------------------------------------
+
 def main():
     dataInput = []
     # Open the input file
@@ -132,6 +167,11 @@ def main():
         insertDates(driver, dataInput)
         # Wait for the search button, then click it
         button = wait.until(EC.element_to_be_clickable((By.ID, "search_button"))).click()
+        wait = WebDriverWait(driver, 30)
+        fltr(driver,FILTER_1_OPTIONS,FILTER_1_TARGET, FILTER_1_ALTERNATIVE_OPTIONS,5)
+        fltr(driver,FILTER_2_OPTIONS,FILTER_2_TARGET)
+        fltr(driver,FILTER_3_OPTIONS,FILTER_3_TARGET1)
+        fltr(driver,FILTER_3_OPTIONS,FILTER_3_TARGET2)
     finally:
         driver.quit()
         
