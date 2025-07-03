@@ -65,6 +65,53 @@ def insertDst(drv, data):
     
 # ---------------------------------------------------------------------------
 
+def insertDates(drv, data):
+    wait = WebDriverWait(drv, 20)
+    # Wait for dates table and then click it
+    button = wait.until(EC.element_to_be_clickable((By.NAME, "EGDSDateRange-date-selector-trigger"))).click()
+    # Wait for the unavailable previous button, then click it (no effect) just to make sure the calander is already shown
+    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[data-stid='uitk-calendar-navigation-controls-previous-button']"))).click()
+    startDateStr = data["Date range start"]
+    parts = startDateStr.split()
+    startDateMonth = f"{parts[0]} {parts[2]}"
+    startDateDay = parts[1]
+    endDateStr = data["Date range end"]
+    parts = endDateStr.split()
+    endDateMonth = f"{parts[0]} {parts[2]}"
+    endDateDay = parts[1]
+    target = startDateMonth
+    day = startDateDay
+    while True:
+        # Grab current month
+        current = drv.find_element(By.CSS_SELECTOR, ".uitk-month-label").text.strip()
+        print("Current month label ", current)
+        # End case : same month - should click twice
+        if startDateMonth == endDateMonth and current == target:
+            wait.until(EC.element_to_be_clickable((By.XPATH, f"//div[text()='{startDateDay}']/ancestor::div[@role='button']"))).click()
+            wait.until(EC.element_to_be_clickable((By.XPATH, f"//div[text()='{endDateDay}']/ancestor::div[@role='button']"))).click()
+            print("Clicked twice same month")
+            break       
+        if current == target:
+            print("Its a match", target)
+            wait.until(EC.element_to_be_clickable((By.XPATH, f"//div[text()='{day}']/ancestor::div[@role='button']"))).click()
+            print("Clicked date")
+            # Check if it was the second click (end date)
+            if target == endDateMonth:
+                break
+            target = endDateMonth
+            day = endDateDay
+        # Click the next month button since there was no match between current and start date
+        btn = drv.find_element(By.CSS_SELECTOR,"[data-stid='uitk-calendar-navigation-controls-next-button']")
+        if btn.is_enabled() and btn.get_attribute("disabled") is None:
+            btn.click()
+        else:
+            s = "your dates are too far away"
+            raise ValueError(s)
+    # Wait for the apply dates button, then click it
+    wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '[data-stid="apply-date-selector"]'))).click()
+    
+# ---------------------------------------------------------------------------
+
 def main():
     dataInput = []
     # Open the input file
@@ -81,6 +128,10 @@ def main():
         goToStaysTab(driver)
         # Insert destination
         insertDst(driver, dataInput)
+        # Insert dates
+        insertDates(driver, dataInput)
+        # Wait for the search button, then click it
+        button = wait.until(EC.element_to_be_clickable((By.ID, "search_button"))).click()
     finally:
         driver.quit()
         
