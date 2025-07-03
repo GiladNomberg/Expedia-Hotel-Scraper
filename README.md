@@ -10,6 +10,7 @@ How to use?
 2. Install required Python packages (pip install -r requirements.txt)
 3. Optional - edit input file
 4. Run the script (python main.py)
+5. The output will appear in a new file called 'output'
 
 Assumptions:
 1. Default travelers (2 adults, one room)
