@@ -4,6 +4,7 @@ from datetime import datetime
 import json,traceback
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 
 # ---------------------------------------------------------------------------
 WEBSITE_URL = "https://www.expedia.ca/"
@@ -45,6 +46,25 @@ def goToStaysTab(drv):
         
 # ---------------------------------------------------------------------------
 
+def insertDst(drv, data):
+    wait = WebDriverWait(drv, 15)
+    # Wait for destination box and then click it
+    wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '[data-stid="destination_form_field-menu-trigger"]'))).click()
+    # Find the destination input field
+    destination_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '[data-stid="destination_form_field-menu-input"]')))
+    # Clear, type the destination city from the input file, then press Down+Enter (select first suggestion)
+    destination_input.clear()
+    destination_input.send_keys(data["Destination"])
+    try:
+        suggestions = WebDriverWait(drv, 3).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "[data-stid='destination_form_field-result-item']")))
+    except:
+        s = "No suggestions for the destination"
+        raise ValueError(s)
+    destination_input.send_keys(Keys.ARROW_DOWN)
+    destination_input.send_keys(Keys.ENTER)
+    
+# ---------------------------------------------------------------------------
+
 def main():
     dataInput = []
     # Open the input file
@@ -59,6 +79,8 @@ def main():
         driver.get(WEBSITE_URL)
         # Click Stays tab
         goToStaysTab(driver)
+        # Insert destination
+        insertDst(driver, dataInput)
     finally:
         driver.quit()
         
