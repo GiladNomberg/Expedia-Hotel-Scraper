@@ -2,9 +2,12 @@ import undetected_chromedriver as uc
 from selenium.webdriver.support.ui import WebDriverWait
 from datetime import datetime
 import json,traceback
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 
 # ---------------------------------------------------------------------------
 WEBSITE_URL = "https://www.expedia.ca/"
+TAB_NAME  = "Stays"
 # ---------------------------------------------------------------------------
 
 def readFileAndCheckValidity(dataInput):
@@ -13,10 +16,8 @@ def readFileAndCheckValidity(dataInput):
     print("Destination: ", dataInput["Destination"])
     print("Start date: ", dataInput["Date range start"])
     print("End date: ", dataInput["Date range end"])
-    
     startDate = datetime.strptime(dataInput["Date range start"], "%B %d %Y")
     endDate = datetime.strptime(dataInput["Date range end"], "%B %d %Y")
-
     if endDate > startDate:
         deltaDays = (endDate - startDate).days
         if deltaDays <= 90:
@@ -28,6 +29,20 @@ def readFileAndCheckValidity(dataInput):
         s = "End date must be after start date"
         raise ValueError(s)
 
+# ---------------------------------------------------------------------------
+
+def goToStaysTab(drv):
+    wait = WebDriverWait(drv, 15)
+    wait.until(EC.presence_of_element_located((By.CLASS_NAME, "egds-tab-custom-text")))
+    tabs = drv.find_elements(By.CLASS_NAME, 'egds-tab-custom-text')
+    for tab in tabs:
+        if TAB_NAME.lower() == tab.text.lower():
+            tab.click()
+            print(f"Clicked button named: {TAB_NAME}")
+            break
+    else:
+        print(f"No tab found named {TAB_NAME}")
+        
 # ---------------------------------------------------------------------------
 
 def main():
@@ -42,6 +57,8 @@ def main():
     try:
         # Open url
         driver.get(WEBSITE_URL)
+        # Click Stays tab
+        goToStaysTab(driver)
     finally:
         driver.quit()
         
@@ -53,5 +70,5 @@ if __name__ == "__main__":
     except Exception as e:
         traceback.print_exc()
         print(f"{e}")
-        with open("output.json", "w", encoding="utf-8") as f:
+        with open("output", "w", encoding="utf-8") as f:
             json.dump(f"{e}", f, ensure_ascii=False, indent=2)
