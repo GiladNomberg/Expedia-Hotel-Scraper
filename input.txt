@@ -1,5 +1,0 @@
-{
-  "Destination": "Vancouver",
-  "Date range start": "August 1 2025",
-  "Date range end": "August 4 2025"
-}
