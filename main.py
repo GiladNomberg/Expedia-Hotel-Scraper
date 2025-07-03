@@ -55,10 +55,10 @@ def goToStaysTab(drv):
     for tab in tabs:
         if TAB_NAME.lower() == tab.text.lower():
             tab.click()
-            print(f"Clicked button named: {TAB_NAME}")
+            print(f"Clicked button: {TAB_NAME}")
             break
     else:
-        print(f"No tab found named {TAB_NAME}")
+        print(f"No tab found {TAB_NAME}")
         
 # ---------------------------------------------------------------------------
 
